@@ -725,7 +725,7 @@ var Ploma = function(canvas) {
   }
 
   function uniquePixelFactor(x, y) {
-    return Math.random();
+    return Math.sin(uniqueCanvasFactor + ((1/x) || 1) + ((1/y) || 1));
   }
 
   function uniqueTextureFactor(textureIndex) {
