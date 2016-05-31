@@ -359,6 +359,7 @@ var Ploma = function(canvas) {
   var inkTextureImageDataGrays = [];
   var inkTextureImage = getImageFromBase64(inkTextureBase64(), "jpeg")
   var inkTextureSamples = new Float32Array(textureSamplesLength);
+  var uniqueCanvasFactor = Math.random();
   getSamplesFromImage(inkTextureImage, inkTextureSamples);
 
   // ------------------------------------------
@@ -686,7 +687,7 @@ var Ploma = function(canvas) {
         // Grain
         var g = map(p_p, 0, 1, 0.8, 0.95);
         var prob = 1-(p_p*p_p*p_p*p_p*p_p); // 1 - x^4
-        g = Math.floor(Math.random()*prob*2) === 1 ? 0 : g;
+        g = Math.floor(uniquePixelFactor(i, j)*prob*2) === 1 ? 0 : g;
         a *= g;
 
         // Blending vars
@@ -721,6 +722,14 @@ var Ploma = function(canvas) {
 
       }
     }
+  }
+
+  function uniquePixelFactor(x, y) {
+    return Math.random();
+  }
+
+  function uniqueTextureFactor(textureIndex) {
+    return Math.sin(uniqueCanvasFactor + textureIndex);
   }
 
   // ------------------------------------------
@@ -840,8 +849,8 @@ var Ploma = function(canvas) {
       //samples[i] = 100 + Math.random()*155;
       
       // Step texture offset randomly [-1, 1]
-      textureOffsetX += (Math.random() * 2 | 0) === 1 ? -1 : 1;
-      textureOffsetY += (Math.random() * 2 | 0) === 1 ? -1 : 1;
+      textureOffsetX += (uniqueTextureFactor(i) * 2 | 0) === 1 ? -1 : 1;
+      textureOffsetY += (uniqueTextureFactor(i) * 2 | 0) === 1 ? -1 : 1;
     }
 
   }
