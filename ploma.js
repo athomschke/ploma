@@ -20,7 +20,7 @@ TODO: License
 // an HTML <canvas> Element element to render
 // strokes onto.
 //
-var Ploma = function(canvas) {
+var Ploma = function(canvas, uniqueCanvasFactor) {
 
   //////////////////////////////////////////////
   // PUBLIC
@@ -306,6 +306,8 @@ var Ploma = function(canvas) {
 
   }
 
+  this.uniqueCanvasFactor = uniqueCanvasFactor || Math.random();
+
   //////////////////////////////////////////////
   // PRIVATE
   //////////////////////////////////////////////
@@ -359,7 +361,7 @@ var Ploma = function(canvas) {
   var inkTextureImageDataGrays = [];
   var inkTextureImage = getImageFromBase64(inkTextureBase64(), "jpeg")
   var inkTextureSamples = new Float32Array(textureSamplesLength);
-  var uniqueCanvasFactor = Math.random();
+  var uniqueCanvasFactor = this.uniqueCanvasFactor;
   getSamplesFromImage(inkTextureImage, inkTextureSamples);
 
   // ------------------------------------------
