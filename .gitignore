@@ -6,8 +6,6 @@
 *.exe
 *.o
 *.so
-index.js
-index.js.map
 
 # Package Manager files #
 ############
