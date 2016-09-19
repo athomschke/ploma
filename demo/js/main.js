@@ -68,8 +68,8 @@ require([
 	
 	uniqueCanvasFactorInput.onchange = function() {
 		var value = parseFloat(uniqueCanvasFactorInput.value);
-		ballpointPen.setUniqueCanvasFactor(value > 0 ? value : undefined);
-		if (value > 0) {
+		ballpointPen.setUniqueCanvasFactor(value > 0 && value <= 1? value : undefined);
+		if (value > 0 && value <= 1) {
 			uniqueCanvasFactorInput.classList.remove('random');
 		} else {
 			uniqueCanvasFactorInput.classList.add('random');
