@@ -1,17 +1,19 @@
 import Point from './Point';
 import Texture from './Texture';
 import last from 'lodash/last';
+import { uniquePixelFactor } from './helpers/semiRandomization';
 
 export default class BezierDrawer {
 
-	constructor(passedCanvas, passedInkTextureBase, passedPenColor, passedStepInterval) {
+	constructor(passedCanvas, passedInkTextureBase, passedPenColor, passedStepInterval, passedUniqueCanvasFactor) {
 		this._canvas = passedCanvas;
 		this._ctx = this._canvas.getContext('2d');
-		this._texture = new Texture(passedInkTextureBase);
+		this._texture = new Texture(passedInkTextureBase, passedUniqueCanvasFactor);
 		this._penR = passedPenColor.r;
 		this._penG = passedPenColor.g;
 		this._penB = passedPenColor.b;
 		this._stepInterval = passedStepInterval;
+		this._uniqueCanvasFactor = passedUniqueCanvasFactor;
 		this.reset();
 	}
 
@@ -320,7 +322,7 @@ export default class BezierDrawer {
 				// Grain
 				var g = this._map(p_p, 0, 1, 0.8, 0.95);
 				var prob = 1-(p_p*p_p*p_p*p_p*p_p); // 1 - x^4
-				g = Math.floor(Math.random()*prob*2) === 1 ? 0 : g;
+				g = Math.floor(uniquePixelFactor(i, j, this._uniqueCanvasFactor)*prob*2) === 1 ? 0 : g;
 				a *= g;
 
 				// Blending vars

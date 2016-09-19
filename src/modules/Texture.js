@@ -1,9 +1,11 @@
 import { inkTextureSamples, textureSamplesLength } from './constants';
+import { uniqueTextureFactor } from './helpers/semiRandomization';
 
 export default class Texture {
-	constructor(passedInkTextureBase) {
+	constructor(passedInkTextureBase, passedUniqueCanvasFactor) {
 		this._inkTextureBase = passedInkTextureBase;
 		this._textureSampleLocations = this._getSampleLocations();
+		this._uniqueCanvasFactor = passedUniqueCanvasFactor;
 		this.clear();
 	}
 
@@ -46,8 +48,8 @@ export default class Texture {
 			//samples[i] = 100 + Math.random()*155;
 			
 			// Step texture offset randomly [-1, 1]
-			textureOffsetX += (Math.random() * 2 | 0) === 1 ? -1 : 1;
-			textureOffsetY += (Math.random() * 2 | 0) === 1 ? -1 : 1;
+			textureOffsetX += (uniqueTextureFactor(i, this._uniqueCanvasFactor) * 2 | 0) === 1 ? -1 : 1;
+			textureOffsetY += (uniqueTextureFactor(i, this._uniqueCanvasFactor) * 2 | 0) === 1 ? -1 : 1;
 		}
 
 		return textureSampleLocations;

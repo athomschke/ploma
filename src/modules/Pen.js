@@ -34,7 +34,7 @@ export default class DefaultPen {
 		this._sample = config.sample;
 		this._paperColor = config.paperColor;
 		this._filterWeight = config.filterWeight;
-		this._bezierDrawer = new BezierDrawer(this._canvas, config.inkTextureBase, config.penColor, config.stepInterval);
+		this._bezierDrawer = new BezierDrawer(this._canvas, config.inkTextureBase, config.penColor, config.stepInterval, config.uniqueCanvasFactor);
 		this.clear();
 	}
 
@@ -45,7 +45,8 @@ export default class DefaultPen {
 			penColor: defaultPenColor,
 			paperColor: paperColorDark,
 			filterWeight: defaultFilterWeight,
-			stepInterval: defaultStepInterval
+			stepInterval: defaultStepInterval,
+			uniqueCanvasFactor: Math.random()
 		};
 		return merge(defaultConfig, config);
 	}
