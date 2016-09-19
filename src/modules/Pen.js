@@ -15,23 +15,6 @@ import BezierDrawer from './BezierDrawer';
 // PRIVATE
 //////////////////////////////////////////////
 
-// DOM
-var w;
-var h;
-var ctx;
-var canvas;
-
-// State
-var rawStrokes;
-var curRawSampledStroke;
-var curFilteredStroke;
-var pointCounter;
-var sample;
-var paperColor;
-var filterWeight;
-
-var bezierDrawer;
-
 // ------------------------------------------
 // Pen
 //
@@ -42,16 +25,16 @@ var bezierDrawer;
 export default class DefaultPen {
 
 	constructor(passedCanvas, optConfig) {
-		canvas = passedCanvas;
-		w = canvas.getAttribute('width');
-		h = canvas.getAttribute('height');
-		ctx = canvas.getContext('2d');
-		ctx.imageSmoothingEnabled = false;
+		this._canvas = passedCanvas;
+		this._w = this._canvas.getAttribute('width');
+		this._h = this._canvas.getAttribute('height');
+		this._ctx = this._canvas.getContext('2d');
+		this._ctx.imageSmoothingEnabled = false;
 		var config = this.getConfiguration(optConfig || {});
-		sample = config.sample;
-		paperColor = config.paperColor;
-		filterWeight = config.filterWeight;
-		bezierDrawer = new BezierDrawer(canvas, config.inkTextureBase, config.penColor, config.stepInterval);
+		this._sample = config.sample;
+		this._paperColor = config.paperColor;
+		this._filterWeight = config.filterWeight;
+		this._bezierDrawer = new BezierDrawer(this._canvas, config.inkTextureBase, config.penColor, config.stepInterval);
 		this.clear();
 	}
 
@@ -78,17 +61,17 @@ export default class DefaultPen {
 	//
 	clear() {
 		// Clear canvas
-		ctx.clearRect(0, 0, w, h);
-		ctx.fillStyle = paperColor;
-		ctx.globalAlpha = 1;
-		ctx.fillRect(0, 0, w, h);
+		this._ctx.clearRect(0, 0, this._w, this._h);
+		this._ctx.fillStyle = this._paperColor;
+		this._ctx.globalAlpha = 1;
+		this._ctx.fillRect(0, 0, this._w, this._h);
 
 		// Reset data
-		rawStrokes = [];
-		curRawSampledStroke = [];
-		curFilteredStroke = [];
-		pointCounter = 0;
-		bezierDrawer.reset();
+		this._rawStrokes = [];
+		this._curRawSampledStroke = [];
+		this._curFilteredStroke = [];
+		this._pointCounter = 0;
+		this._bezierDrawer.reset();
 	}
 
 	// ------------------------------------------
@@ -100,13 +83,13 @@ export default class DefaultPen {
 	//
 	beginStroke(x, y, p) {
 		var point = new Point(x,y,p);
-		pointCounter++;
+		this._pointCounter++;
 
-		rawStrokes.push([point]);
-		curFilteredStroke = [point];
-		curRawSampledStroke = [point];
+		this._rawStrokes.push([point]);
+		this._curFilteredStroke = [point];
+		this._curRawSampledStroke = [point];
 
-		bezierDrawer.reset();
+		this._bezierDrawer.reset();
 	}
 
 	// ------------------------------------------
@@ -117,7 +100,7 @@ export default class DefaultPen {
 	// to the canvas.
 	//
 	extendStroke(x, y, p) {
-		pointCounter++;
+		this._pointCounter++;
 		
 		var point = new Point(x,y,p);
 
@@ -127,33 +110,33 @@ export default class DefaultPen {
 		//if(curRawStroke.last().equals(point)) {
 			//return; // ignore dupes TODO: ??
 		//}
-		last(rawStrokes).push(point);
+		last(this._rawStrokes).push(point);
 
 		//
 		// Sampled and filtered
 		//
-		if (pointCounter % sample === 0) {
+		if (this._pointCounter % this._sample === 0) {
 
 			// Push sampled point
 			//if(curRawSampledStroke.last().equals(point)) {
 				//return; // ignore dupes TODO: ??
 			//}
-			curRawSampledStroke.push(point);
+			this._curRawSampledStroke.push(point);
 
 			// Filter next-to-last input point
-			var len = curRawSampledStroke.length;
+			var len = this._curRawSampledStroke.length;
 			if(len >= 3) {
-				var fpoint = calculateFilteredPoint(
-					curRawSampledStroke[len - 3],
-					curRawSampledStroke[len - 2],
-					curRawSampledStroke[len - 1],
-					filterWeight
+				var fpoint = this._calculateFilteredPoint(
+					this._curRawSampledStroke[len - 3],
+					this._curRawSampledStroke[len - 2],
+					this._curRawSampledStroke[len - 1],
+					this._filterWeight
 				);
-				curFilteredStroke.push(fpoint);
+				this._curFilteredStroke.push(fpoint);
 			}
 
 			// Redraw sampled and filtered
-			redraw();
+			this._redraw();
 		}
 	}
 
@@ -170,11 +153,11 @@ export default class DefaultPen {
 
 		// Keep the last point as is for now
 		// TODO: Try to address the "tapering on mouseup" issue
-		last(rawStrokes).push(point);
-		curRawSampledStroke.push(point);
-		curFilteredStroke.push(point);
+		last(this._rawStrokes).push(point);
+		this._curRawSampledStroke.push(point);
+		this._curFilteredStroke.push(point);
 
-		redraw();
+		this._redraw();
 	}
 
 	// ------------------------------------------
@@ -192,11 +175,11 @@ export default class DefaultPen {
 	//
 	getStrokes() {
 		var strokes = [];
-		for(var i = 0; i < rawStrokes.length; i++){
+		for(var i = 0; i < this._rawStrokes.length; i++){
 			var stroke = [];
 			strokes.push(stroke);
-			for(var j = 0; j < rawStrokes[i].length; j++) {
-				stroke.push(rawStrokes[i][j].asObj());
+			for(var j = 0; j < this._rawStrokes[i].length; j++) {
+				stroke.push(this._rawStrokes[i][j].asObj());
 			}
 		}
 		return strokes;
@@ -253,8 +236,8 @@ export default class DefaultPen {
 	//
 	curStroke() {
 		var curStroke = [];
-		for(var i = 0; i < last(rawStrokes).length; i++) {
-			curStroke.push(last(rawStrokes)[i].asObj());
+		for(var i = 0; i < last(this._rawStrokes).length; i++) {
+			curStroke.push(last(this._rawStrokes)[i].asObj());
 		}
 		return curStroke;
 	}
@@ -265,7 +248,7 @@ export default class DefaultPen {
 	// Sets the input sampling rate.
 	//
 	setSample(n) {
-		sample = n;
+		this._sample = n;
 	}
 
 	// ------------------------------------------
@@ -275,11 +258,11 @@ export default class DefaultPen {
 	// and height.
 	//
 	resize(a, b) {
-		canvas.setAttribute('width', a);
-		canvas.setAttribute('height', b);
-		w = canvas.getAttribute('width');
-		h = canvas.getAttribute('height');
-		let oldStrokes = cloneDeep(rawStrokes);
+		this._canvas.setAttribute('width', a);
+		this._canvas.setAttribute('height', b);
+		this._w = this._canvas.getAttribute('width');
+		this._h = this._canvas.getAttribute('height');
+		let oldStrokes = cloneDeep(this._rawStrokes);
 		this.clear();
 		this.drawStrokes(oldStrokes);
 	}
@@ -415,45 +398,45 @@ export default class DefaultPen {
 		return canvas.getContext('2d').getImageData(0, 0, w, h);
 	}
 
-}
 
-// ------------------------------------------
-// redraw
-//
-// Calls the curve drawing function if there
-// are enough points for a bezier.
-//
-function redraw() {
-	// TODO:
-	// - Handle single point and double point strokes
+	// ------------------------------------------
+	// redraw
+	//
+	// Calls the curve drawing function if there
+	// are enough points for a bezier.
+	//
+	_redraw() {
+		// TODO:
+		// - Handle single point and double point strokes
 
-	// 3 points needed for a look-ahead bezier
-	var len = curFilteredStroke.length;
-	if(len >= 3) {
-		bezierDrawer.drawControlPoints(
-			curFilteredStroke[len - 3],
-			curFilteredStroke[len - 2],
-			curFilteredStroke[len - 1]
+		// 3 points needed for a look-ahead bezier
+		var len = this._curFilteredStroke.length;
+		if(len >= 3) {
+			this._bezierDrawer.drawControlPoints(
+				this._curFilteredStroke[len - 3],
+				this._curFilteredStroke[len - 2],
+				this._curFilteredStroke[len - 1]
+			);
+		}
+	}
+
+
+	// ------------------------------------------
+	// calculateFilteredPoint
+	//
+	// Returns a filtered, sanitized version of 
+	// point p2 between points p1 and p3.
+	//
+	_calculateFilteredPoint(p1, p2, p3, filterWeight) {
+		//if (p1 == null || p2 == null || p3 == null)
+		//  return null; // Not enough points yet to filter
+
+		var m = p1.getMidPt(p3);
+
+		return new Point(
+			filterWeight * p2.x + (1 - filterWeight) * m.x,
+			filterWeight * p2.y + (1 - filterWeight) * m.y,
+			filterWeight * p2.p + (1 - filterWeight) * m.p
 		);
 	}
-}
-
-
-// ------------------------------------------
-// calculateFilteredPoint
-//
-// Returns a filtered, sanitized version of 
-// point p2 between points p1 and p3.
-//
-function calculateFilteredPoint(p1, p2, p3, filterWeight) {
-	//if (p1 == null || p2 == null || p3 == null)
-	//  return null; // Not enough points yet to filter
-
-	var m = p1.getMidPt(p3);
-
-	return new Point(
-		filterWeight * p2.x + (1 - filterWeight) * m.x,
-		filterWeight * p2.y + (1 - filterWeight) * m.y,
-		filterWeight * p2.p + (1 - filterWeight) * m.p
-	);
 }
