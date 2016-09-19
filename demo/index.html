@@ -19,6 +19,20 @@
     width: 0px; /* hide */
     height: 0px; /* hide */
   }
+  .input {
+    height: 50px;
+    width: 150px;
+    position: absolute;
+    top: 10px;
+    font-family: sans-serif;
+    font-size: 24px;
+    background: rgba(50, 50, 50, 0.9);
+    color: white;
+    cursor: pointer;
+    border-radius: 2px;
+    line-height: 50px;
+    text-align: center;
+  }
   .button {
     height: 50px;
     width: 50px;
@@ -32,6 +46,9 @@
     border-radius: 2px;
     line-height: 50px;
     text-align: center;
+  }
+  .random {
+    background: rgba(255, 0, 0, 0.2);
   }
   .button img {
     margin-top: 13px;
@@ -50,6 +67,9 @@
   }
   #texture {
     left: 290px;
+  }
+  #uniqueCanvasFactor {
+    left: 220px;
   }
   .noselect {
     -webkit-touch-callout: none;
@@ -70,6 +90,7 @@
   <div id="clear" class="button noselect"><img src="img/paper-24.png"/></div>
   <div id="save" class="button noselect"><img src="img/save-24.png"/></div>
   <div id="cursor" class="button noselect"><img id="cursor-icon" src="img/cursor-24-75.png"/></div>
+  <input id="uniqueCanvasFactor" type="text" class="input noselect" value="0.315"></div>
   <!--<div id="texture" class="button noselect">Texturing</div>-->
   <!-- Wacom plugin -->
   <object id="wtPlugin" type="application/x-wacomtabletplugin">

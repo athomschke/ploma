@@ -68,7 +68,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	
 	var _BallpointPen2 = _interopRequireDefault(_BallpointPen);
 	
-	var _BlueBallpointPen = __webpack_require__(/*! ./Pens/BlueBallpointPen */ 166);
+	var _BlueBallpointPen = __webpack_require__(/*! ./Pens/BlueBallpointPen */ 167);
 	
 	var _BlueBallpointPen2 = _interopRequireDefault(_BlueBallpointPen);
 	
@@ -202,23 +202,6 @@ return /******/ (function(modules) { // webpackBootstrap
 	// PRIVATE
 	//////////////////////////////////////////////
 	
-	// DOM
-	var w;
-	var h;
-	var ctx;
-	var canvas;
-	
-	// State
-	var rawStrokes;
-	var curRawSampledStroke;
-	var curFilteredStroke;
-	var pointCounter;
-	var sample;
-	var paperColor;
-	var filterWeight;
-	
-	var bezierDrawer;
-	
 	// ------------------------------------------
 	// Pen
 	//
@@ -231,16 +214,16 @@ return /******/ (function(modules) { // webpackBootstrap
 		function DefaultPen(passedCanvas, optConfig) {
 			_classCallCheck(this, DefaultPen);
 	
-			canvas = passedCanvas;
-			w = canvas.getAttribute('width');
-			h = canvas.getAttribute('height');
-			ctx = canvas.getContext('2d');
-			ctx.imageSmoothingEnabled = false;
+			this._canvas = passedCanvas;
+			this._w = this._canvas.getAttribute('width');
+			this._h = this._canvas.getAttribute('height');
+			this._ctx = this._canvas.getContext('2d');
+			this._ctx.imageSmoothingEnabled = false;
 			var config = this.getConfiguration(optConfig || {});
-			sample = config.sample;
-			paperColor = config.paperColor;
-			filterWeight = config.filterWeight;
-			bezierDrawer = new _BezierDrawer2.default(canvas, config.inkTextureBase, config.penColor, config.stepInterval);
+			this._sample = config.sample;
+			this._paperColor = config.paperColor;
+			this._filterWeight = config.filterWeight;
+			this._bezierDrawer = new _BezierDrawer2.default(this._canvas, config.inkTextureBase, config.penColor, config.stepInterval, config.uniqueCanvasFactor);
 			this.clear();
 		}
 	
@@ -257,6 +240,11 @@ return /******/ (function(modules) { // webpackBootstrap
 				};
 				return (0, _merge2.default)(defaultConfig, config);
 			}
+		}, {
+			key: 'setUniqueCanvasFactor',
+			value: function setUniqueCanvasFactor(passedUniqueCanvasFactor) {
+				this._bezierDrawer.setUniqueCanvasFactor(passedUniqueCanvasFactor);
+			}
 	
 			//////////////////////////////////////////////
 			// PUBLIC
@@ -272,17 +260,17 @@ return /******/ (function(modules) { // webpackBootstrap
 			key: 'clear',
 			value: function clear() {
 				// Clear canvas
-				ctx.clearRect(0, 0, w, h);
-				ctx.fillStyle = paperColor;
-				ctx.globalAlpha = 1;
-				ctx.fillRect(0, 0, w, h);
+				this._ctx.clearRect(0, 0, this._w, this._h);
+				this._ctx.fillStyle = this._paperColor;
+				this._ctx.globalAlpha = 1;
+				this._ctx.fillRect(0, 0, this._w, this._h);
 	
 				// Reset data
-				rawStrokes = [];
-				curRawSampledStroke = [];
-				curFilteredStroke = [];
-				pointCounter = 0;
-				bezierDrawer.reset();
+				this._rawStrokes = [];
+				this._curRawSampledStroke = [];
+				this._curFilteredStroke = [];
+				this._pointCounter = 0;
+				this._bezierDrawer.reset();
 			}
 	
 			// ------------------------------------------
@@ -297,13 +285,13 @@ return /******/ (function(modules) { // webpackBootstrap
 			key: 'beginStroke',
 			value: function beginStroke(x, y, p) {
 				var point = new _Point2.default(x, y, p);
-				pointCounter++;
+				this._pointCounter++;
 	
-				rawStrokes.push([point]);
-				curFilteredStroke = [point];
-				curRawSampledStroke = [point];
+				this._rawStrokes.push([point]);
+				this._curFilteredStroke = [point];
+				this._curRawSampledStroke = [point];
 	
-				bezierDrawer.reset();
+				this._bezierDrawer.reset();
 			}
 	
 			// ------------------------------------------
@@ -317,7 +305,7 @@ return /******/ (function(modules) { // webpackBootstrap
 		}, {
 			key: 'extendStroke',
 			value: function extendStroke(x, y, p) {
-				pointCounter++;
+				this._pointCounter++;
 	
 				var point = new _Point2.default(x, y, p);
 	
@@ -327,28 +315,28 @@ return /******/ (function(modules) { // webpackBootstrap
 				//if(curRawStroke.last().equals(point)) {
 				//return; // ignore dupes TODO: ??
 				//}
-				(0, _last2.default)(rawStrokes).push(point);
+				(0, _last2.default)(this._rawStrokes).push(point);
 	
 				//
 				// Sampled and filtered
 				//
-				if (pointCounter % sample === 0) {
+				if (this._pointCounter % this._sample === 0) {
 	
 					// Push sampled point
 					//if(curRawSampledStroke.last().equals(point)) {
 					//return; // ignore dupes TODO: ??
 					//}
-					curRawSampledStroke.push(point);
+					this._curRawSampledStroke.push(point);
 	
 					// Filter next-to-last input point
-					var len = curRawSampledStroke.length;
+					var len = this._curRawSampledStroke.length;
 					if (len >= 3) {
-						var fpoint = calculateFilteredPoint(curRawSampledStroke[len - 3], curRawSampledStroke[len - 2], curRawSampledStroke[len - 1], filterWeight);
-						curFilteredStroke.push(fpoint);
+						var fpoint = this._calculateFilteredPoint(this._curRawSampledStroke[len - 3], this._curRawSampledStroke[len - 2], this._curRawSampledStroke[len - 1], this._filterWeight);
+						this._curFilteredStroke.push(fpoint);
 					}
 	
 					// Redraw sampled and filtered
-					redraw();
+					this._redraw();
 				}
 			}
 	
@@ -368,11 +356,11 @@ return /******/ (function(modules) { // webpackBootstrap
 	
 				// Keep the last point as is for now
 				// TODO: Try to address the "tapering on mouseup" issue
-				(0, _last2.default)(rawStrokes).push(point);
-				curRawSampledStroke.push(point);
-				curFilteredStroke.push(point);
+				(0, _last2.default)(this._rawStrokes).push(point);
+				this._curRawSampledStroke.push(point);
+				this._curFilteredStroke.push(point);
 	
-				redraw();
+				this._redraw();
 			}
 	
 			// ------------------------------------------
@@ -393,11 +381,11 @@ return /******/ (function(modules) { // webpackBootstrap
 			key: 'getStrokes',
 			value: function getStrokes() {
 				var strokes = [];
-				for (var i = 0; i < rawStrokes.length; i++) {
+				for (var i = 0; i < this._rawStrokes.length; i++) {
 					var stroke = [];
 					strokes.push(stroke);
-					for (var j = 0; j < rawStrokes[i].length; j++) {
-						stroke.push(rawStrokes[i][j].asObj());
+					for (var j = 0; j < this._rawStrokes[i].length; j++) {
+						stroke.push(this._rawStrokes[i][j].asObj());
 					}
 				}
 				return strokes;
@@ -448,8 +436,8 @@ return /******/ (function(modules) { // webpackBootstrap
 			key: 'curStroke',
 			value: function curStroke() {
 				var curStroke = [];
-				for (var i = 0; i < (0, _last2.default)(rawStrokes).length; i++) {
-					curStroke.push((0, _last2.default)(rawStrokes)[i].asObj());
+				for (var i = 0; i < (0, _last2.default)(this._rawStrokes).length; i++) {
+					curStroke.push((0, _last2.default)(this._rawStrokes)[i].asObj());
 				}
 				return curStroke;
 			}
@@ -463,7 +451,7 @@ return /******/ (function(modules) { // webpackBootstrap
 		}, {
 			key: 'setSample',
 			value: function setSample(n) {
-				sample = n;
+				this._sample = n;
 			}
 	
 			// ------------------------------------------
@@ -476,11 +464,11 @@ return /******/ (function(modules) { // webpackBootstrap
 		}, {
 			key: 'resize',
 			value: function resize(a, b) {
-				canvas.setAttribute('width', a);
-				canvas.setAttribute('height', b);
-				w = canvas.getAttribute('width');
-				h = canvas.getAttribute('height');
-				var oldStrokes = (0, _cloneDeep2.default)(rawStrokes);
+				this._canvas.setAttribute('width', a);
+				this._canvas.setAttribute('height', b);
+				this._w = this._canvas.getAttribute('width');
+				this._h = this._canvas.getAttribute('height');
+				var oldStrokes = (0, _cloneDeep2.default)(this._rawStrokes);
 				this.clear();
 				this.drawStrokes(oldStrokes);
 			}
@@ -613,45 +601,50 @@ return /******/ (function(modules) { // webpackBootstrap
 				// Return the image data
 				return canvas.getContext('2d').getImageData(0, 0, w, h);
 			}
+	
+			// ------------------------------------------
+			// redraw
+			//
+			// Calls the curve drawing function if there
+			// are enough points for a bezier.
+			//
+	
+		}, {
+			key: '_redraw',
+			value: function _redraw() {
+				// TODO:
+				// - Handle single point and double point strokes
+	
+				// 3 points needed for a look-ahead bezier
+				var len = this._curFilteredStroke.length;
+				if (len >= 3) {
+					this._bezierDrawer.drawControlPoints(this._curFilteredStroke[len - 3], this._curFilteredStroke[len - 2], this._curFilteredStroke[len - 1]);
+				}
+			}
+	
+			// ------------------------------------------
+			// calculateFilteredPoint
+			//
+			// Returns a filtered, sanitized version of 
+			// point p2 between points p1 and p3.
+			//
+	
+		}, {
+			key: '_calculateFilteredPoint',
+			value: function _calculateFilteredPoint(p1, p2, p3, filterWeight) {
+				//if (p1 == null || p2 == null || p3 == null)
+				//  return null; // Not enough points yet to filter
+	
+				var m = p1.getMidPt(p3);
+	
+				return new _Point2.default(filterWeight * p2.x + (1 - filterWeight) * m.x, filterWeight * p2.y + (1 - filterWeight) * m.y, filterWeight * p2.p + (1 - filterWeight) * m.p);
+			}
 		}]);
 	
 		return DefaultPen;
 	}();
 	
-	// ------------------------------------------
-	// redraw
-	//
-	// Calls the curve drawing function if there
-	// are enough points for a bezier.
-	//
-	
-	
 	exports.default = DefaultPen;
-	function redraw() {
-		// TODO:
-		// - Handle single point and double point strokes
-	
-		// 3 points needed for a look-ahead bezier
-		var len = curFilteredStroke.length;
-		if (len >= 3) {
-			bezierDrawer.drawControlPoints(curFilteredStroke[len - 3], curFilteredStroke[len - 2], curFilteredStroke[len - 1]);
-		}
-	}
-	
-	// ------------------------------------------
-	// calculateFilteredPoint
-	//
-	// Returns a filtered, sanitized version of 
-	// point p2 between points p1 and p3.
-	//
-	function calculateFilteredPoint(p1, p2, p3, filterWeight) {
-		//if (p1 == null || p2 == null || p3 == null)
-		//  return null; // Not enough points yet to filter
-	
-		var m = p1.getMidPt(p3);
-	
-		return new _Point2.default(filterWeight * p2.x + (1 - filterWeight) * m.x, filterWeight * p2.y + (1 - filterWeight) * m.y, filterWeight * p2.p + (1 - filterWeight) * m.p);
-	}
 
 /***/ },
 /* 3 */
@@ -6490,50 +6483,366 @@ return /******/ (function(modules) { // webpackBootstrap
 	
 	var _last2 = _interopRequireDefault(_last);
 	
+	var _semiRandomization = __webpack_require__(/*! ./helpers/semiRandomization */ 166);
+	
 	function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 	
 	function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
 	
-	var canvas;
-	var ctx;
-	var texture;
-	var lastControlPoint;
-	var imageData;
-	var w;
-	var h;
-	var stepOffset;
-	var stepInterval;
-	var penR, penG, penB;
-	
 	var BezierDrawer = function () {
-		function BezierDrawer(passedCanvas, passedInkTextureBase, passedPenColor, passedStepInterval) {
+		function BezierDrawer(passedCanvas, passedInkTextureBase, passedPenColor, passedStepInterval, passedUniqueCanvasFactor) {
 			_classCallCheck(this, BezierDrawer);
 	
-			canvas = passedCanvas;
-			ctx = canvas.getContext('2d');
-			texture = new _Texture2.default(passedInkTextureBase);
-			penR = passedPenColor.r;
-			penG = passedPenColor.g;
-			penB = passedPenColor.b;
-			stepInterval = passedStepInterval;
+			this._canvas = passedCanvas;
+			this._ctx = this._canvas.getContext('2d');
+			this._texture = new _Texture2.default(passedInkTextureBase, passedUniqueCanvasFactor);
+			this._penR = passedPenColor.r;
+			this._penG = passedPenColor.g;
+			this._penB = passedPenColor.b;
+			this._stepInterval = passedStepInterval;
+			this._uniqueCanvasFactor = passedUniqueCanvasFactor;
 			this.reset();
 		}
 	
 		_createClass(BezierDrawer, [{
 			key: 'reset',
 			value: function reset() {
-				lastControlPoint = null;
-				imageData = null;
-				w = null;
-				h = null;
-				stepOffset = stepInterval;
-				texture.clear();
+				this._lastControlPoint = null;
+				this._imageData = null;
+				this._w = null;
+				this._h = null;
+				this._stepOffset = this._stepInterval;
+				this._texture.clear();
 			}
 		}, {
 			key: 'drawControlPoints',
 			value: function drawControlPoints(pt0, pt1, pt2) {
-				cacheVariables();
-				createAndDrawBezier(pt0, pt1, pt2);
+				this._cacheVariables();
+				this._createAndDrawBezier(pt0, pt1, pt2);
+			}
+		}, {
+			key: 'setUniqueCanvasFactor',
+			value: function setUniqueCanvasFactor(passedUniqueCanvasFactor) {
+				this._uniqueCanvasFactor = passedUniqueCanvasFactor;
+				this._texture.setUniqueCanvasFactor(passedUniqueCanvasFactor);
+			}
+		}, {
+			key: '_cacheVariables',
+			value: function _cacheVariables() {
+				this._w = this._w || this._canvas.getAttribute('width');
+				this._h = this._h || this._canvas.getAttribute('height');
+				this._imageData = this._imageData || this._ctx.getImageData(0, 0, this._w, this._h);
+			}
+	
+			// ------------------------------------------
+			// createAndDrawBezier
+			//
+			// Draw a look-ahead cubic bezier based on 3
+			// input points.
+			//
+	
+		}, {
+			key: '_createAndDrawBezier',
+			value: function _createAndDrawBezier(pt0, pt1, pt2) {
+				// Endpoints and control points
+				var p0 = pt0;
+				var p1 = 0.0;
+				var p2 = 0.0;
+				var p3 = pt1;
+	
+				// Value access
+				var p0_x = p0.x;
+				var p0_y = p0.y;
+				var p0_p = p0.p;
+				var p3_x = p3.x;
+				var p3_y = p3.y;
+				var p3_p = p3.p;
+	
+				// Calculate p1
+				if (!this._lastControlPoint) {
+					p1 = new _Point2.default(p0_x + (p3_x - p0_x) * 0.33, p0_y + (p3_y - p0_y) * 0.33, p0_p + (p3_p - p0_p) * 0.33);
+				} else {
+					p1 = this._lastControlPoint.getMirroredPt(p0);
+				}
+	
+				// Calculate p2
+				if (pt2) {
+					p2 = new _Point2.default(
+					//p3_x - (((p3_x - p0_x) + (pt2.x - p3_x)) / 6),
+					//p3_y - (((p3_y - p0_y) + (pt2.y - p3_y)) / 6),
+					//p3_p - (((p3_p - p0_p) + (pt2.p - p3_p)) / 6)
+					p3_x - (p3_x - p0_x + (pt2.x - p3_x)) * 0.1666, p3_y - (p3_y - p0_y + (pt2.y - p3_y)) * 0.1666, p3_p - (p3_p - p0_p + (pt2.p - p3_p)) * 0.1666);
+				} else {
+					p2 = new _Point2.default(p0_x + (p3_x - p0_x) * 0.66, p0_y + (p3_y - p0_y) * 0.66, p0_p + (p3_p - p0_p) * 0.66);
+				}
+	
+				// Set last control point
+				this._lastControlPoint = p2;
+	
+				// Step along curve and draw step
+				var stepPoints = this._calculateStepPoints(p0, p1, p2, p3);
+				for (var i = 0; i < stepPoints.length; i++) {
+					this._drawStep(this._imageData.data, stepPoints[i]);
+				}
+	
+				// Calculate redraw bounds
+				// TODO:
+				// - Math.min = x <= y ? x : y; INLINE
+				var p1_x = p1.x;
+				var p1_y = p1.y;
+				var p2_x = p2.x;
+				var p2_y = p2.y;
+				var minx = Math.min(p0_x, p1_x, p2_x, p3_x);
+				var miny = Math.min(p0_y, p1_y, p2_y, p3_y);
+				var maxx = Math.max(p0_x, p1_x, p2_x, p3_x);
+				var maxy = Math.max(p0_y, p1_y, p2_y, p3_y);
+	
+				// Put image using a crude dirty rect
+				//elapsed = Date.now() - elapsed;
+				//console.log(elapsed);
+				this._ctx.putImageData(this._imageData, 0, 0, minx - 5, miny - 5, maxx - minx + 10, maxy - miny + 10);
+			}
+	
+			// ------------------------------------------
+			// calculateStepPoints
+			//
+			// Calculates even steps along a bezier with
+			// control points (p0, p1, p2, p3).
+			//
+	
+		}, {
+			key: '_calculateStepPoints',
+			value: function _calculateStepPoints(p0, p1, p2, p3) {
+				var stepPoints = [];
+				var i = this._stepInterval;
+	
+				// Value access
+				var p0_x = p0.x;
+				var p0_y = p0.y;
+				var p0_p = p0.p;
+	
+				// Algebraic conveniences, not geometric
+				var A_x = p3.x - 3 * p2.x + 3 * p1.x - p0_x;
+				var A_y = p3.y - 3 * p2.y + 3 * p1.y - p0_y;
+				var A_p = p3.p - 3 * p2.p + 3 * p1.p - p0_p;
+				var B_x = 3 * p2.x - 6 * p1.x + 3 * p0_x;
+				var B_y = 3 * p2.y - 6 * p1.y + 3 * p0_y;
+				var B_p = 3 * p2.p - 6 * p1.p + 3 * p0_p;
+				var C_x = 3 * p1.x - 3 * p0_x;
+				var C_y = 3 * p1.y - 3 * p0_y;
+				var C_p = 3 * p1.p - 3 * p0_p;
+	
+				var t = (i - this._stepOffset) / Math.sqrt(C_x * C_x + C_y * C_y);
+	
+				while (t <= 1.0) {
+					// Point
+					var step_x = t * (t * (t * A_x + B_x) + C_x) + p0_x;
+					var step_y = t * (t * (t * A_y + B_y) + C_y) + p0_y;
+					var step_p = t * (t * (t * A_p + B_p) + C_p) + p0_p;
+					stepPoints.push(new _Point2.default(step_x, step_y, step_p));
+	
+					// Step distance until next one
+					var s_x = t * (t * 3 * A_x + 2 * B_x) + C_x; // dx/dt
+					var s_y = t * (t * 3 * A_y + 2 * B_y) + C_y; // dy/dt
+					var s = Math.sqrt(s_x * s_x + s_y * s_y); // s = derivative in 2D space
+					var dt = i / s; // i = interval / derivative in 2D
+					t = t + dt;
+				}
+	
+				// TODO: Maybe use a better approximation for distance along the bezier?
+				if (stepPoints.length == 0) // We didn't step at all along this Bezier
+					this._stepOffset = this._stepOffset + p0.getDistance(p3);else this._stepOffset = (0, _last2.default)(stepPoints).getDistance(p3);
+	
+				return stepPoints;
+			}
+	
+			// ------------------------------------------
+			// calculateWidth
+			//
+			// Calculates a non-linear width offset in
+			// the range [-2, 1] based on pressure.
+			//
+	
+		}, {
+			key: '_calculateWidth',
+			value: function _calculateWidth(p) {
+				var width = 0.0;
+				//console.log(p);
+	
+				if (p < 0) {
+					// Possible output from bezier
+					width = -3.50;
+				}
+				if (p < 0.2) {
+					width = this._map(p, 0, 0.2, -3.50, -3.20);
+				}
+				if (p >= 0.2 && p < 0.45) {
+					width = this._map(p, 0.2, 0.45, -3.20, -2.50);
+				}
+				if (p >= 0.45 && p < 0.8) {
+					width = this._map(p, 0.45, 0.8, -2.50, -1.70);
+				}
+				if (p >= 0.8 && p < 0.95) {
+					width = this._map(p, 0.8, 0.95, -1.70, -1.55);
+				}
+				if (p >= 0.95 && p <= 1) {
+					width = this._map(p, 0.95, 1, -1.55, -1.30);
+				}
+				if (p > 1) {
+					// Possible output from bezier
+					width = -1.30;
+				}
+	
+				return width;
+			}
+		}, {
+			key: '_map',
+			value: function _map(value, valueMin, valueMax, from, to) {
+				var ratio = (value - valueMin) / (valueMax - valueMin);
+				return from + ratio * (to - from);
+			}
+	
+			// ------------------------------------------
+			// drawStep
+			//
+			// Draws a 5x5 pixel grid at a step point
+			// with proper antialiasing and texture.
+			//
+	
+		}, {
+			key: '_drawStep',
+			value: function _drawStep(imageDataData, point) {
+	
+				/////////////////////
+				// PRE-LOOP
+				/////////////////////
+	
+				var width = 0.0;
+				width = this._calculateWidth(point.p);
+	
+				/////////////////////
+				// LOOP
+				/////////////////////
+	
+				var p_x = 0.0;
+				var p_y = 0.0;
+				var p_p = 0.0;
+				var centerX = 0.0;
+				var centerY = 0.0;
+				var i = 0;
+				var j = 0;
+				var left = 0;
+				var right = 0;
+				var top = 0;
+				var bottom = 0;
+				var dx = 0.0;
+				var dy = 0.0;
+				var dist = 0.0;
+				var a = 0.0;
+				var invA = 0.0;
+				var idx_0 = 0;
+				var idx_1 = 0;
+				var idx_2 = 0;
+				var idx_3 = 0;
+				var idx_0_i = 0;
+				var oldR = 0.0;
+				var oldG = 0.0;
+				var oldB = 0.0;
+				var oldA = 0.0;
+				var newR = 0.0;
+				var newG = 0.0;
+				var newB = 0.0;
+				var newA = 0.0;
+	
+				p_x = point.x;
+				p_y = point.y;
+				p_p = point.p;
+				centerX = Math.round(p_x);
+				centerY = Math.round(p_y);
+				left = centerX - 2;
+				right = centerX + 3;
+				top = centerY - 2;
+				bottom = centerY + 3;
+	
+				// Step around inside the texture before the loop
+				//textureSampleStep = (textureSampleStep === textureSampleLocations.length - 1) ? 0 : (textureSampleStep + 1);
+	
+				//////////////
+				// Horizontal
+				//////////////
+				for (i = left; i < right; i++) {
+	
+					// Distance
+					dx = p_x - i;
+	
+					// Byte-index
+					idx_0_i = i * 4;
+	
+					////////////
+					// Vertical
+					////////////
+					for (j = top; j < bottom; j++) {
+	
+						// Distance
+						dy = p_y - j;
+						dist = Math.sqrt(dx * dx + dy * dy);
+	
+						// Byte-index
+						idx_0 = idx_0_i + j * (this._w * 4);
+	
+						// Antialiasing
+						//a = 5 * ((0.3 / (dist - width)) - 0.085);
+						a = 1.5 / (dist - width) - 0.425;
+	
+						// Spike
+						if (dist < width) {
+							a = 1;
+						}
+	
+						// Clamp alpha
+						if (a < 0) a = 0;
+						if (a >= 1) a = 1;
+	
+						// Apply texture
+						a *= this._texture.nextInkTextureSample();
+	
+						// Grain
+						var g = this._map(p_p, 0, 1, 0.8, 0.95);
+						var prob = 1 - p_p * p_p * p_p * p_p * p_p; // 1 - x^4
+						g = Math.floor((0, _semiRandomization.uniquePixelFactor)(i, j, this._uniqueCanvasFactor) * prob * 2) === 1 ? 0 : g;
+						a *= g;
+	
+						// Blending vars
+						invA = 1 - a;
+						idx_1 = idx_0 + 1;
+						idx_2 = idx_0 + 2;
+						idx_3 = idx_0 + 3;
+						oldR = imageDataData[idx_0];
+						oldG = imageDataData[idx_1];
+						oldB = imageDataData[idx_2];
+	
+						oldA = imageDataData[idx_3] / 255;
+	
+						if (oldA === 1) {
+							newR = this._penR * a + oldR * invA;
+							newG = this._penG * a + oldG * invA;
+							newB = this._penB * a + oldB * invA;
+						} else {
+							newA = a + oldA * invA;
+							newR = (this._penR * a + oldR * oldA * invA) / newA;
+							newG = (this._penG * a + oldG * oldA * invA) / newA;
+							newB = (this._penB * a + oldB * oldA * invA) / newA;
+							newA = newA * 255;
+							// Set new A
+							imageDataData[idx_3] = newA;
+						}
+	
+						// Set new RGB
+						imageDataData[idx_0] = newR;
+						imageDataData[idx_1] = newG;
+						imageDataData[idx_2] = newB;
+					}
+				}
 			}
 		}]);
 	
@@ -6541,295 +6850,6 @@ return /******/ (function(modules) { // webpackBootstrap
 	}();
 	
 	exports.default = BezierDrawer;
-	
-	
-	function cacheVariables() {
-		w = w || canvas.getAttribute('width');
-		h = h || canvas.getAttribute('height');
-		imageData = imageData || ctx.getImageData(0, 0, w, h);
-	}
-	
-	// ------------------------------------------
-	// createAndDrawBezier
-	//
-	// Draw a look-ahead cubic bezier based on 3
-	// input points.
-	//
-	function createAndDrawBezier(pt0, pt1, pt2) {
-		// Endpoints and control points
-		var p0 = pt0;
-		var p1 = 0.0;
-		var p2 = 0.0;
-		var p3 = pt1;
-	
-		// Value access
-		var p0_x = p0.x;
-		var p0_y = p0.y;
-		var p0_p = p0.p;
-		var p3_x = p3.x;
-		var p3_y = p3.y;
-		var p3_p = p3.p;
-	
-		// Calculate p1
-		if (!lastControlPoint) {
-			p1 = new _Point2.default(p0_x + (p3_x - p0_x) * 0.33, p0_y + (p3_y - p0_y) * 0.33, p0_p + (p3_p - p0_p) * 0.33);
-		} else {
-			p1 = lastControlPoint.getMirroredPt(p0);
-		}
-	
-		// Calculate p2
-		if (pt2) {
-			p2 = new _Point2.default(
-			//p3_x - (((p3_x - p0_x) + (pt2.x - p3_x)) / 6),
-			//p3_y - (((p3_y - p0_y) + (pt2.y - p3_y)) / 6),
-			//p3_p - (((p3_p - p0_p) + (pt2.p - p3_p)) / 6)
-			p3_x - (p3_x - p0_x + (pt2.x - p3_x)) * 0.1666, p3_y - (p3_y - p0_y + (pt2.y - p3_y)) * 0.1666, p3_p - (p3_p - p0_p + (pt2.p - p3_p)) * 0.1666);
-		} else {
-			p2 = new _Point2.default(p0_x + (p3_x - p0_x) * 0.66, p0_y + (p3_y - p0_y) * 0.66, p0_p + (p3_p - p0_p) * 0.66);
-		}
-	
-		// Set last control point
-		lastControlPoint = p2;
-	
-		// Step along curve and draw step
-		var stepPoints = calculateStepPoints(p0, p1, p2, p3);
-		for (var i = 0; i < stepPoints.length; i++) {
-			drawStep(imageData.data, stepPoints[i]);
-		}
-	
-		// Calculate redraw bounds
-		// TODO:
-		// - Math.min = x <= y ? x : y; INLINE
-		var p1_x = p1.x;
-		var p1_y = p1.y;
-		var p2_x = p2.x;
-		var p2_y = p2.y;
-		var minx = Math.min(p0_x, p1_x, p2_x, p3_x);
-		var miny = Math.min(p0_y, p1_y, p2_y, p3_y);
-		var maxx = Math.max(p0_x, p1_x, p2_x, p3_x);
-		var maxy = Math.max(p0_y, p1_y, p2_y, p3_y);
-	
-		// Put image using a crude dirty rect
-		//elapsed = Date.now() - elapsed;
-		//console.log(elapsed);
-		ctx.putImageData(imageData, 0, 0, minx - 5, miny - 5, maxx - minx + 10, maxy - miny + 10);
-	}
-	
-	// ------------------------------------------
-	// calculateStepPoints
-	//
-	// Calculates even steps along a bezier with
-	// control points (p0, p1, p2, p3).
-	//
-	function calculateStepPoints(p0, p1, p2, p3) {
-		var stepPoints = [];
-		var i = stepInterval;
-	
-		// Value access
-		var p0_x = p0.x;
-		var p0_y = p0.y;
-		var p0_p = p0.p;
-	
-		// Algebraic conveniences, not geometric
-		var A_x = p3.x - 3 * p2.x + 3 * p1.x - p0_x;
-		var A_y = p3.y - 3 * p2.y + 3 * p1.y - p0_y;
-		var A_p = p3.p - 3 * p2.p + 3 * p1.p - p0_p;
-		var B_x = 3 * p2.x - 6 * p1.x + 3 * p0_x;
-		var B_y = 3 * p2.y - 6 * p1.y + 3 * p0_y;
-		var B_p = 3 * p2.p - 6 * p1.p + 3 * p0_p;
-		var C_x = 3 * p1.x - 3 * p0_x;
-		var C_y = 3 * p1.y - 3 * p0_y;
-		var C_p = 3 * p1.p - 3 * p0_p;
-	
-		var t = (i - stepOffset) / Math.sqrt(C_x * C_x + C_y * C_y);
-	
-		while (t <= 1.0) {
-			// Point
-			var step_x = t * (t * (t * A_x + B_x) + C_x) + p0_x;
-			var step_y = t * (t * (t * A_y + B_y) + C_y) + p0_y;
-			var step_p = t * (t * (t * A_p + B_p) + C_p) + p0_p;
-			stepPoints.push(new _Point2.default(step_x, step_y, step_p));
-	
-			// Step distance until next one
-			var s_x = t * (t * 3 * A_x + 2 * B_x) + C_x; // dx/dt
-			var s_y = t * (t * 3 * A_y + 2 * B_y) + C_y; // dy/dt
-			var s = Math.sqrt(s_x * s_x + s_y * s_y); // s = derivative in 2D space
-			var dt = i / s; // i = interval / derivative in 2D
-			t = t + dt;
-		}
-	
-		// TODO: Maybe use a better approximation for distance along the bezier?
-		if (stepPoints.length == 0) // We didn't step at all along this Bezier
-			stepOffset = stepOffset + p0.getDistance(p3);else stepOffset = (0, _last2.default)(stepPoints).getDistance(p3);
-	
-		return stepPoints;
-	}
-	
-	// ------------------------------------------
-	// calculateWidth
-	//
-	// Calculates a non-linear width offset in
-	// the range [-2, 1] based on pressure.
-	//
-	function calculateWidth(p) {
-		var width = 0.0;
-		//console.log(p);
-	
-		if (p < 0) {
-			// Possible output from bezier
-			width = -3.50;
-		}
-		if (p < 0.2) {
-			width = map(p, 0, 0.2, -3.50, -3.20);
-		}
-		if (p >= 0.2 && p < 0.45) {
-			width = map(p, 0.2, 0.45, -3.20, -2.50);
-		}
-		if (p >= 0.45 && p < 0.8) {
-			width = map(p, 0.45, 0.8, -2.50, -1.70);
-		}
-		if (p >= 0.8 && p < 0.95) {
-			width = map(p, 0.8, 0.95, -1.70, -1.55);
-		}
-		if (p >= 0.95 && p <= 1) {
-			width = map(p, 0.95, 1, -1.55, -1.30);
-		}
-		if (p > 1) {
-			// Possible output from bezier
-			width = -1.30;
-		}
-	
-		return width;
-	}
-	
-	function map(value, valueMin, valueMax, from, to) {
-		var ratio = (value - valueMin) / (valueMax - valueMin);
-		return from + ratio * (to - from);
-	}
-	
-	// ------------------------------------------
-	// drawStep
-	//
-	// Draws a 5x5 pixel grid at a step point
-	// with proper antialiasing and texture.
-	//
-	function drawStep(imageDataData, point) {
-	
-		/////////////////////
-		// PRE-LOOP
-		/////////////////////
-	
-		var width = 0.0;
-		width = calculateWidth(point.p);
-	
-		/////////////////////
-		// LOOP
-		/////////////////////
-	
-		var p_x = 0.0;
-		var p_y = 0.0;
-		var p_p = 0.0;
-		var centerX = 0.0;
-		var centerY = 0.0;
-		var i = 0;
-		var j = 0;
-		var left = 0;
-		var right = 0;
-		var top = 0;
-		var bottom = 0;
-		var dx = 0.0;
-		var dy = 0.0;
-		var dist = 0.0;
-		var a = 0.0;
-		var invA = 0.0;
-		var idx_0 = 0;
-		var idx_1 = 0;
-		var idx_2 = 0;
-		var idx_0_i = 0;
-		var oldR = 0.0;
-		var oldG = 0.0;
-		var oldB = 0.0;
-		var newR = 0.0;
-		var newG = 0.0;
-		var newB = 0.0;
-	
-		p_x = point.x;
-		p_y = point.y;
-		p_p = point.p;
-		centerX = Math.round(p_x);
-		centerY = Math.round(p_y);
-		left = centerX - 2;
-		right = centerX + 3;
-		top = centerY - 2;
-		bottom = centerY + 3;
-	
-		// Step around inside the texture before the loop
-		//textureSampleStep = (textureSampleStep === textureSampleLocations.length - 1) ? 0 : (textureSampleStep + 1);
-	
-		//////////////
-		// Horizontal
-		//////////////
-		for (i = left; i < right; i++) {
-	
-			// Distance
-			dx = p_x - i;
-	
-			// Byte-index
-			idx_0_i = i * 4;
-	
-			////////////
-			// Vertical
-			////////////
-			for (j = top; j < bottom; j++) {
-	
-				// Distance
-				dy = p_y - j;
-				dist = Math.sqrt(dx * dx + dy * dy);
-	
-				// Byte-index
-				idx_0 = idx_0_i + j * (w * 4);
-	
-				// Antialiasing
-				//a = 5 * ((0.3 / (dist - width)) - 0.085);
-				a = 1.5 / (dist - width) - 0.425;
-	
-				// Spike
-				if (dist < width) {
-					a = 1;
-				}
-	
-				// Clamp alpha
-				if (a < 0) a = 0;
-				if (a >= 1) a = 1;
-	
-				// Apply texture
-				a *= texture.nextInkTextureSample();
-	
-				// Grain
-				var g = map(p_p, 0, 1, 0.8, 0.95);
-				var prob = 1 - p_p * p_p * p_p * p_p * p_p; // 1 - x^4
-				g = Math.floor(Math.random() * prob * 2) === 1 ? 0 : g;
-				a *= g;
-	
-				// Blending vars
-				invA = 1 - a;
-				idx_1 = idx_0 + 1;
-				idx_2 = idx_0 + 2;
-				oldR = imageDataData[idx_0];
-				oldG = imageDataData[idx_1];
-				oldB = imageDataData[idx_2];
-	
-				newR = penR * a + oldR * invA;
-				newG = penG * a + oldG * invA;
-				newB = penB * a + oldB * invA;
-	
-				// Set new RGB
-				imageDataData[idx_0] = newR;
-				imageDataData[idx_1] = newG;
-				imageDataData[idx_2] = newB;
-			}
-		}
-	}
 
 /***/ },
 /* 165 */
@@ -6848,33 +6868,91 @@ return /******/ (function(modules) { // webpackBootstrap
 	
 	var _constants = __webpack_require__(/*! ./constants */ 162);
 	
+	var _semiRandomization = __webpack_require__(/*! ./helpers/semiRandomization */ 166);
+	
 	function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
 	
-	var textureSampleLocations;
-	var textureSampleStep;
-	var inkTextureBase;
-	
 	var Texture = function () {
-		function Texture(passedInkTextureBase) {
+		function Texture(passedInkTextureBase, passedUniqueCanvasFactor) {
 			_classCallCheck(this, Texture);
 	
-			inkTextureBase = passedInkTextureBase;
-			textureSampleLocations = getSampleLocations();
+			this._inkTextureBase = passedInkTextureBase;
+			this._textureSampleLocations = this._getSampleLocations();
+			this._uniqueCanvasFactor = passedUniqueCanvasFactor;
 			this.clear();
 		}
 	
 		_createClass(Texture, [{
 			key: 'clear',
 			value: function clear() {
-				textureSampleStep = 0;
+				this._textureSampleStep = 0;
 			}
 		}, {
 			key: 'nextInkTextureSample',
 			value: function nextInkTextureSample() {
 				// Get new texture sample offset at center	
-				var t = _constants.inkTextureSamples[textureSampleStep];
-				textureSampleStep = textureSampleStep === textureSampleLocations.length - 1 ? 0 : textureSampleStep + 1;
+				var t = _constants.inkTextureSamples[this._textureSampleStep];
+				this._textureSampleStep = this._textureSampleStep === this._textureSampleLocations.length - 1 ? 0 : this._textureSampleStep + 1;
 				return t;
+			}
+		}, {
+			key: 'setUniqueCanvasFactor',
+			value: function setUniqueCanvasFactor(passedUniqueCanvasFactor) {
+				this._uniqueCanvasFactor = passedUniqueCanvasFactor;
+			}
+		}, {
+			key: '_getSampleLocations',
+			value: function _getSampleLocations() {
+				var img = this._getImageFromBase64(this._inkTextureBase, 'jpeg');
+				var imageData = this._getImageDataFromImage(img);
+				var imageDataGrays = [];
+				var textureOffsetX = 0;
+				var textureOffsetY = 0;
+				var textureSampleLocations = [];
+	
+				// Read grays from image
+				for (var i = 0; i < imageData.length; i += 4) {
+					imageDataGrays.push(1 - imageData[i] / 255);
+				}
+	
+				// Read samples from mirrored-and-tiled grays
+				for (var _i = 0; _i < _constants.textureSamplesLength; _i++) {
+					// Get normalized pixel within texture
+					var T_s = textureOffsetX / (img.width - 1);
+					var T_t = textureOffsetY / (img.height - 1);
+					var s = Math.abs(Math.abs(T_s - 1) % 2 - 1);
+					var t = Math.abs(Math.abs(T_t - 1) % 2 - 1);
+					var x = Math.floor(s * (img.width - 1));
+					var y = Math.floor(t * (img.height - 1));
+					textureSampleLocations.push({ x: x, y: y });
+					var d = imageDataGrays[x + y * img.width];
+					_constants.inkTextureSamples[_i] = d;
+					//samples[i] = 100 + Math.random()*155;
+	
+					// Step texture offset randomly [-1, 1]
+					textureOffsetX += ((0, _semiRandomization.uniqueTextureFactor)(_i, this._uniqueCanvasFactor) * 2 | 0) === 1 ? -1 : 1;
+					textureOffsetY += ((0, _semiRandomization.uniqueTextureFactor)(_i, this._uniqueCanvasFactor) * 2 | 0) === 1 ? -1 : 1;
+				}
+	
+				return textureSampleLocations;
+			}
+		}, {
+			key: '_getImageFromBase64',
+			value: function _getImageFromBase64(base64, type) {
+				var img = new Image();
+				img.src = 'data:image/' + type + ';base64, ' + base64;
+	
+				return img;
+			}
+		}, {
+			key: '_getImageDataFromImage',
+			value: function _getImageDataFromImage(img) {
+				var canvas = document.createElement('canvas');
+				var ctx = canvas.getContext('2d');
+				canvas.width = img.width;
+				canvas.height = img.height;
+				ctx.drawImage(img, 0, 0);
+				return ctx.getImageData(0, 0, img.width, img.height).data;
 			}
 		}]);
 	
@@ -6882,61 +6960,31 @@ return /******/ (function(modules) { // webpackBootstrap
 	}();
 	
 	exports.default = Texture;
-	
-	
-	function getSampleLocations() {
-		var img = getImageFromBase64(inkTextureBase, 'jpeg');
-		var imageData = getImageDataFromImage(img);
-		var imageDataGrays = [];
-		var textureOffsetX = 0;
-		var textureOffsetY = 0;
-		var textureSampleLocations = [];
-	
-		// Read grays from image
-		for (var i = 0; i < imageData.length; i += 4) {
-			imageDataGrays.push(1 - imageData[i] / 255);
-		}
-	
-		// Read samples from mirrored-and-tiled grays
-		for (var _i = 0; _i < _constants.textureSamplesLength; _i++) {
-			// Get normalized pixel within texture
-			var T_s = textureOffsetX / (img.width - 1);
-			var T_t = textureOffsetY / (img.height - 1);
-			var s = Math.abs(Math.abs(T_s - 1) % 2 - 1);
-			var t = Math.abs(Math.abs(T_t - 1) % 2 - 1);
-			var x = Math.floor(s * (img.width - 1));
-			var y = Math.floor(t * (img.height - 1));
-			textureSampleLocations.push({ x: x, y: y });
-			var d = imageDataGrays[x + y * img.width];
-			_constants.inkTextureSamples[_i] = d;
-			//samples[i] = 100 + Math.random()*155;
-	
-			// Step texture offset randomly [-1, 1]
-			textureOffsetX += (Math.random() * 2 | 0) === 1 ? -1 : 1;
-			textureOffsetY += (Math.random() * 2 | 0) === 1 ? -1 : 1;
-		}
-	
-		return textureSampleLocations;
-	}
-	
-	function getImageFromBase64(base64, type) {
-		var img = new Image();
-		img.src = 'data:image/' + type + ';base64, ' + base64;
-	
-		return img;
-	}
-	
-	function getImageDataFromImage(img) {
-		var canvas = document.createElement('canvas');
-		var ctx = canvas.getContext('2d');
-		canvas.width = img.width;
-		canvas.height = img.height;
-		ctx.drawImage(img, 0, 0);
-		return ctx.getImageData(0, 0, img.width, img.height).data;
-	}
 
 /***/ },
 /* 166 */
+/*!**************************************************!*\
+  !*** ./src/modules/helpers/semiRandomization.js ***!
+  \**************************************************/
+/***/ function(module, exports) {
+
+	"use strict";
+	
+	Object.defineProperty(exports, "__esModule", {
+		value: true
+	});
+	exports.uniquePixelFactor = uniquePixelFactor;
+	exports.uniqueTextureFactor = uniqueTextureFactor;
+	function uniquePixelFactor(x, y, uniqueCanvasFactor) {
+		return uniqueCanvasFactor === undefined ? Math.random() : ((Math.sin(x) + 1) / 2 + (Math.sin(y) + 1) / 2 + uniqueCanvasFactor) / 3;
+	}
+	
+	function uniqueTextureFactor(textureIndex, uniqueCanvasFactor) {
+		return uniqueCanvasFactor === undefined ? Math.random() : Math.sin(uniqueCanvasFactor + textureIndex);
+	}
+
+/***/ },
+/* 167 */
 /*!**************************************!*\
   !*** ./src/Pens/BlueBallpointPen.js ***!
   \**************************************/
