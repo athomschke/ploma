@@ -31,6 +31,11 @@ export default class BezierDrawer {
 		this._createAndDrawBezier(pt0, pt1, pt2);
 	}
 
+	setUniqueCanvasFactor(passedUniqueCanvasFactor) {
+		this._uniqueCanvasFactor = passedUniqueCanvasFactor;
+		this._texture.setUniqueCanvasFactor(passedUniqueCanvasFactor);
+	}
+
 	_cacheVariables() {
 		this._w = this._w || this._canvas.getAttribute('width');
 		this._h = this._h || this._canvas.getAttribute('height');

@@ -13,10 +13,11 @@ require([
 	var cursor;
 	var plugin;
 	var penAPI;
+	var uniqueCanvasFactorInput;
 
 	// State
 	var sampling = 2;
-	var ploma = null;
+	var ballpointPen = null;
 	var isDrawing = false;
 
 	// Red Pixel
@@ -39,6 +40,7 @@ require([
 	clear = document.getElementById('clear');
 	cursor = document.getElementById('cursor');
 	plugin = document.getElementById('wtPlugin');
+	uniqueCanvasFactorInput = document.getElementById('uniqueCanvasFactor');
 	penAPI = plugin.penAPI || {
 		pressure: 0.9
 	};
@@ -51,7 +53,7 @@ require([
 	rid.data.set(r);
 
 	// load Ploma onto canvas and clear it
-	ploma = new Ploma.BallpointPen(canvas);
+	ballpointPen = new Ploma.BallpointPen(canvas);
 
 	////////////
 	// BUTTONS
@@ -61,7 +63,17 @@ require([
 	};
 	
 	clear.onclick = function() {
-		ploma.clear();
+		ballpointPen.clear();
+	};
+	
+	uniqueCanvasFactorInput.onchange = function() {
+		var value = parseFloat(uniqueCanvasFactorInput.value);
+		ballpointPen.setUniqueCanvasFactor(value > 0 ? value : undefined);
+		if (value > 0) {
+			uniqueCanvasFactorInput.classList.remove('random');
+		} else {
+			uniqueCanvasFactorInput.classList.add('random');
+		}
 	};
 
 	cursor.onclick = function() {
@@ -79,7 +91,7 @@ require([
 	// RESIZE
 	////////////
 	window.onresize = function() {
-		ploma.resize(window.innerWidth, window.innerHeight);
+		ballpointPen.resize(window.innerWidth, window.innerHeight);
 	};
 
 	///////////////////////////////////
@@ -88,7 +100,7 @@ require([
 	canvas.onmousedown = function(e) {
 		isDrawing = true;
 		if (sampling === 0) return;
-		ploma.beginStroke(
+		ballpointPen.beginStroke(
 			e.clientX,
 			e.clientY,
 			penAPI.pressure ? penAPI.pressure : 0.9
@@ -109,7 +121,7 @@ require([
 			);
 			return;
 		}
-		ploma.extendStroke(
+		ballpointPen.extendStroke(
 			e.clientX,
 			e.clientY,
 			penAPI.pressure ? penAPI.pressure : 0.9
@@ -119,7 +131,7 @@ require([
 	canvas.onmouseup = function(e) {
 		isDrawing = false;
 		if (sampling === 0) return;
-		ploma.endStroke(
+		ballpointPen.endStroke(
 			e.clientX,
 			e.clientY,
 			penAPI.pressure ? penAPI.pressure : 0.9

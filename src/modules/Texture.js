@@ -19,6 +19,10 @@ export default class Texture {
 		this._textureSampleStep = (this._textureSampleStep === this._textureSampleLocations.length - 1) ? 0 : (this._textureSampleStep + 1);
 		return t;
 	}
+
+	setUniqueCanvasFactor(passedUniqueCanvasFactor) {
+		this._uniqueCanvasFactor = passedUniqueCanvasFactor;
+	}
 	
 	_getSampleLocations() {
 		var img = this._getImageFromBase64(this._inkTextureBase, 'jpeg');

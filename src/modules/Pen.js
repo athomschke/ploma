@@ -45,10 +45,14 @@ export default class DefaultPen {
 			penColor: defaultPenColor,
 			paperColor: paperColorDark,
 			filterWeight: defaultFilterWeight,
-			stepInterval: defaultStepInterval,
-			uniqueCanvasFactor: Math.random()
+			stepInterval: defaultStepInterval
 		};
 		return merge(defaultConfig, config);
+	}
+
+
+	setUniqueCanvasFactor(passedUniqueCanvasFactor) {
+		this._bezierDrawer.setUniqueCanvasFactor(passedUniqueCanvasFactor);
 	}
 
 	//////////////////////////////////////////////
