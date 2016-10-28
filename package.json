@@ -28,6 +28,7 @@
     "webpack": "^1.13.2"
   },
   "dependencies": {
-    "lodash": "^4.15.0"
+    "lodash": "^4.15.0",
+    "raw-loader": "^0.5.1"
   }
 }
