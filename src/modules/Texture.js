@@ -69,6 +69,10 @@ export default class Texture {
 	_getImageDataFromImage(img) {
 		var canvas = document.createElement('canvas');
 		var ctx = canvas.getContext('2d');
+		// use hardcoded values as phantomjs cannot deal with base64 and
+		// complains about width being 0 when running tests
+		img.width = 44;
+		img.height = 139;
 		canvas.width = img.width;
 		canvas.height = img.height;
 		ctx.drawImage(img, 0, 0);
