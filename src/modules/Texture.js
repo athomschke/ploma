@@ -4,8 +4,8 @@ import { uniqueTextureFactor } from './helpers/semiRandomization';
 export default class Texture {
 	constructor(passedInkTextureBase, passedUniqueCanvasFactor) {
 		this._inkTextureBase = passedInkTextureBase;
-		this._textureSampleLocations = this._getSampleLocations();
 		this._uniqueCanvasFactor = passedUniqueCanvasFactor;
+		this._textureSampleLocations = this._getSampleLocations();
 		this.clear();
 	}
 
