@@ -17,6 +17,12 @@ export default class BezierDrawer {
 		this.reset();
 	}
 
+	setPenColor(aColor) {
+		this._penR = aColor.r;
+		this._penG = aColor.g;
+		this._penB = aColor.b;
+	}
+
 	reset() {
 		this._lastControlPoint = null;
 		this._imageData = null;

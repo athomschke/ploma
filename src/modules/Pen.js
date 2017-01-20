@@ -38,6 +38,10 @@ export default class DefaultPen {
 		this.clear();
 	}
 
+	setPenColor(aColor) {
+		this._bezierDrawer.setPenColor(aColor);
+	}
+
 	getConfiguration(config) {
 		let defaultConfig = {
 			sample: defaultSample,
