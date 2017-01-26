@@ -1,6 +1,6 @@
 {
   "name": "ploma",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "High-fidelity ballpoint pen rendering for pressure sensitive tablets http://plomaproject.tumblr.com",
   "main": "index.js",
   "scripts": {
